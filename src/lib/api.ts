@@ -16,19 +16,27 @@ export function setApiUrl(url: string): void {
 
 async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const baseUrl = getApiUrl();
-  const response = await fetch(`${baseUrl}${endpoint}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options?.headers,
-    },
-  });
-  
-  if (!response.ok) {
-    throw new Error(`API Error: ${response.statusText}`);
+  const url = `${baseUrl}${endpoint}`;
+
+  try {
+    const response = await fetch(url, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...options?.headers,
+      },
+      mode: 'cors',
+    });
+
+    if (!response.ok) {
+      throw new Error(`API Error: ${response.status} ${response.statusText}`);
+    }
+
+    return response.json();
+  } catch (error) {
+    console.error('Fetch error:', { url, error });
+    throw error;
   }
-  
-  return response.json();
 }
 
 // Server Info
@@ -133,10 +141,41 @@ export const saveAutoReconnectConfig = (config: AutoReconnectConfig) =>
 
 // Test connection
 export async function testConnection(): Promise<boolean> {
+  const baseUrl = getApiUrl();
+  console.log('Testing connection to:', baseUrl);
+
   try {
-    await getServerInfo();
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+    const response = await fetch(`${baseUrl}/api/info`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      mode: 'cors',
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      console.error('Connection test failed:', response.status, response.statusText);
+      return false;
+    }
+
+    const data = await response.json();
+    console.log('Connection test successful:', data);
     return true;
-  } catch {
+  } catch (error) {
+    console.error('Connection test error:', error);
+    if (error instanceof Error) {
+      if (error.name === 'AbortError') {
+        console.error('Connection timed out after 10 seconds');
+      } else if (error.message.includes('Failed to fetch')) {
+        console.error('Network error - check if backend is running and CORS is configured');
+      }
+    }
     return false;
   }
 }

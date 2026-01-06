@@ -118,18 +118,30 @@ export default function SettingsPage() {
           {/* Test Result */}
           {testResult !== null && (
             <div className={cn(
-              "flex items-center gap-2 p-3 rounded-lg",
+              "p-4 rounded-lg space-y-2",
               testResult ? "bg-primary/10 text-primary" : "bg-destructive/10 text-destructive"
             )}>
               {testResult ? (
-                <>
+                <div className="flex items-center gap-2">
                   <CheckCircle className="w-5 h-5" />
-                  <span>Connection successful!</span>
-                </>
+                  <span className="font-medium">Connection successful!</span>
+                </div>
               ) : (
                 <>
-                  <XCircle className="w-5 h-5" />
-                  <span>Connection failed. Check the URL and ensure the backend is running.</span>
+                  <div className="flex items-start gap-2">
+                    <XCircle className="w-5 h-5 mt-0.5 flex-shrink-0" />
+                    <div className="space-y-2">
+                      <p className="font-medium">Connection failed</p>
+                      <p className="text-sm opacity-90">Troubleshooting steps:</p>
+                      <ul className="text-sm space-y-1 list-disc list-inside opacity-90">
+                        <li>Check if the backend is running (node start.js)</li>
+                        <li>Verify the URL is correct (include http:// or https://)</li>
+                        <li>Make sure port 1043 is not blocked by firewall</li>
+                        <li>If backend is on another machine, use that machine's IP address</li>
+                        <li>Check browser console (F12) for detailed error messages</li>
+                      </ul>
+                    </div>
+                  </div>
                 </>
               )}
             </div>
